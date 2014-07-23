@@ -1,10 +1,11 @@
 #coding=utf8
 
+import sys
 import random
 import networkx as nx
 import matplotlib.pyplot as plt
 
-def read_file(path):
+def read_graph_from_file(path):
     # read edge-list from file
     graph = nx.read_edgelist(path, data = (('weight', float), ))
 
@@ -14,13 +15,25 @@ def read_file(path):
 
     return graph
 
-def a(graph):
+def read_game_info_from_file(path):
+    game = {}
+
+    with file(path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            data = line.split('\t')
+            game[data[0]] = data[1]
+
+    return game
+
+def estimate_stop_cond(graph):
     for node in graph.nodes_iter():
         count = {}
 
         for neighbor in graph.neighbors_iter(node):
-            count[graph.node[neighbor]['label']]\
-                    = count.setdefault(graph.node[neighbor]['label'], 0) + 1
+            neighbor_label = graph.node[neighbor]['label']
+            neighbor_weight = graph.edge[node][neighbor]['weight']
+            count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + neighbor_weight
 
         # find out labels with maximum count
         count_items = count.items()
@@ -45,8 +58,9 @@ def lpa(graph):
             count = {}
 
             for neighbor in graph.neighbors_iter(node):
-                count[graph.node[neighbor]['label']]\
-                        = count.setdefault(graph.node[neighbor]['label'], 0) + 1
+                neighbor_label = graph.node[neighbor]['label']
+                neighbor_weight = graph.edge[node][neighbor]['weight']
+                count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + neighbor_weight
 
             # find out labels with maximum count
             count_items = count.items()
@@ -58,29 +72,58 @@ def lpa(graph):
 
             graph.node[node]['label'] = label
 
-        if a(graph) is True:
+        if estimate_stop_cond(graph) is True or loop_count > 100:
             print 'complete'
             return
 
-        if loop_count > 100:
-            print 'complete'
-            return
+def cut_large_community(graph, limit):
+    label_count = {}
 
-def print_info(graph):
+    for node in graph.nodes_iter():
+        label_count.setdefault(graph.node[node]['label'], []).append(node)
+
+    large_community = []
+    for nodes in label_count.values():
+        if len(nodes) > limit:
+            sub_graph = nx.Graph(graph.subgraph(nodes))
+            for node in sub_graph.node:
+                sub_graph.node[node]['label'] = node
+            large_community.append(sub_graph)
+
+    return large_community
+
+def print_graph_info(graph):
+    game_info = read_game_info_from_file('sample/id_name.info')
     info = {}
+
     for node, data in graph.nodes_iter(True):
-        info.setdefault(graph.node[node]['label'], []).append(node)
+        info.setdefault(graph.node[node]['label'], []).append(game_info.get(node, node))
 
     print 'node num:', len(graph.nodes())
     print 'class num:', len(info.keys())
     print 'class:', info.keys()
-    print 'info:', info
+    print 'info:\n'
+    for clazz in info:
+        print clazz, ':',
+        for label in info[clazz]:
+            print '\'' + label + '\'',
+        print '\n',
 
 if __name__ == '__main__':
-    g = read_file('f.data')
+    g = read_graph_from_file('sample/f.data')
     lpa(g)
-    print_info(g)
+    #print_graph_info(g)
     #node_color = [float(g.node[v]['label']) for v in g]
-    #labels = dict([(node, node) for node, data in g.nodes_iter(True)])
-    #nx.draw_networkx(g, node_color = node_color, labels = labels)
+    ##labels = dict([(node, node) for node, data in g.nodes_iter(True)])
+    #nx.draw(g, node_color = node_color)
     #plt.show()
+
+    large_community = cut_large_community(g, 200)
+    for sg in large_community:
+        lpa(sg)
+        print_graph_info(sg)
+        sys.exit(0)
+        #node_color = [float(g.node[v]['label']) for v in g]
+        ##labels = dict([(node, node) for node, data in g.nodes_iter(True)])
+        #nx.draw(g, node_color = node_color)
+        #plt.show()
