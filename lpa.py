@@ -47,6 +47,7 @@ def estimate_stop_cond(graph):
 
     return True
 
+# label-propagation algorithm
 def lpa(graph):
     loop_count = 0
 
@@ -63,12 +64,18 @@ def lpa(graph):
                 count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + neighbor_weight
 
             # find out labels with maximum count
+            count_sum = sum(count.values())
+            for key in count:
+                count[key] = count[key] / count_sum
             count_items = count.items()
             count_items.sort(key = lambda x: x[1], reverse = True)
 
             # if there is not only one label with maximum count then choose one randomly
-            labels = [k for k,v in count_items if v == count_items[0][1]]
-            label = random.sample(labels, 1)[0]
+            labels = [(k, v) for k, v in count_items if v == count_items[0][1]]
+            if len(labels) == 0:
+                continue
+
+            label = random.sample(labels, 1)[0][0]
 
             graph.node[node]['label'] = label
 
@@ -92,6 +99,22 @@ def cut_large_community(graph, limit):
 
     return large_community
 
+def crop_edge(graph, value):
+    edges = []
+
+    for u, v, data in graph.edges_iter(data = True):
+        if data['weight'] < value:
+            edges.append((u, v),)
+
+    return edges
+
+def fitness_proportionate_selection(weights):
+    random_value = random.random() * sum(weights)
+    for index, weight in enumerate(weights):
+        random_value -= weight
+        if random_value < 0:
+            return index
+
 def print_graph_info(graph):
     game_info = read_game_info_from_file('sample/id_name.info')
     info = {}
@@ -110,20 +133,13 @@ def print_graph_info(graph):
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/f.data')
+    g = read_graph_from_file('sample/t.data')
     lpa(g)
-    #print_graph_info(g)
-    #node_color = [float(g.node[v]['label']) for v in g]
-    ##labels = dict([(node, node) for node, data in g.nodes_iter(True)])
-    #nx.draw(g, node_color = node_color)
-    #plt.show()
+    print_graph_info(g)
 
-    large_community = cut_large_community(g, 200)
-    for sg in large_community:
-        lpa(sg)
-        print_graph_info(sg)
-        sys.exit(0)
-        #node_color = [float(g.node[v]['label']) for v in g]
-        ##labels = dict([(node, node) for node, data in g.nodes_iter(True)])
-        #nx.draw(g, node_color = node_color)
-        #plt.show()
+    node_color = [float(g.node[v]['label']) for v in g]
+    #labels = dict([(node, node) for node, data in g.nodes_iter(True)])
+    nx.draw_networkx(g, node_color = node_color)
+    plt.show()
+
+    #sys.exit(0)
