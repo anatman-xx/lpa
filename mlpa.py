@@ -29,7 +29,7 @@ def read_game_info_from_file(path):
 
 # muti-label-propagation algorithm (can find overlapping communities)
 # use synchronous updating for better results
-def mlpa(graph, v):
+def lpa(graph, v):
     def label(graph, x, c):
         pass
 
