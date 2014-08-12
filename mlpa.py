@@ -36,25 +36,30 @@ def read_game_info_from_file(path):
 # parameter:
 #     v : number of labels of a vertex can contain
 def lpa(graph, v):
+    def propagate(node):
+	# calculate belonging coefficient
+	labels = dict() # store vertex -> belonging coefficient
+
+        for neighbor in graph.neighbors_iter(node):
+	    for label in graph.node[neighbor]:
+	        labels[label] = labels.get(label, 0.0)\
+			+ graph.node[neighbor]['prev_label'][label]
+	
+	degree = graph.degree(node)
+	for label in labels:
+	    labels[label] /= degree
+	
+        # delete pair that is less then threshold
+	threshold = 1.0 / v
+	for label in labels:
+	    if labels[label] < threshold:
+		del labels[label]
+
     def normalize(node):
         sum_val = 0
         for neighbor in graph.neighbors_iter(node):
             sum_val += graph.node[neighbor]['']
 
-        for neighbor in graph.neighbors_iter(node):
-            pass
-
-    def calculate_belonging_coefficient(node):
-        degree = float(graph.degree(node))
-        labels = dict()
-
-        for neighbor in graph.neighbors_iter(node):
-            for label in graph.node[neighbor]['prev_label']:
-                labels.setdefault(label, graph.node[neighbor]['prev_label'][label])
-
-        return graph.node[node]['current_label'] = val / degree
-
-    def propagate(node, source, dest):
         for neighbor in graph.neighbors_iter(node):
             pass
 
