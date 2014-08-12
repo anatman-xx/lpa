@@ -48,6 +48,7 @@ def estimate_stop_cond(graph):
     return True
 
 # label-propagation algorithm
+# use asynchronous updating for better results
 def lpa(graph):
     loop_count = 0
 
@@ -95,11 +96,11 @@ def print_graph_info(graph):
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/r.data')
+    g = read_graph_from_file('sample/f.data')
     lpa(g)
     print_graph_info(g)
 
     node_color = [float(g.node[v]['label']) for v in g]
-    #labels = dict([(node, node) for node, data in g.nodes_iter(True)])
+    labels = dict([(node, node) for node, data in g.nodes_iter(True)])
     nx.draw_networkx(g, node_color = node_color)
     plt.show()

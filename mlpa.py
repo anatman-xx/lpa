@@ -9,9 +9,9 @@ def read_graph_from_file(path):
     # read edge-list from file
     graph = nx.read_edgelist(path, data = (('weight', float), ))
 
-    # initial graph node's attribute 'label' with its id
+    # initial graph's node's attribute 'label' with its id
     for node, data in graph.nodes_iter(True):
-        data['pre_label'] = {node : 1.0}
+        data['prev_label'] = {node : 1.0}
         data['current_label'] = dict()
 
     return graph
@@ -27,31 +27,49 @@ def read_game_info_from_file(path):
 
     return game
 
-# muti-label-propagation algorithm (can find overlapping communities)
-# use synchronous updating for better results
+# COPRA - muti-label-propagation algorithm
+# (can find overlapping communities)
+#
+# note:
+#     use synchronous updating for better results
+#
+# parameter:
+#     v : number of labels of a vertex can contain
 def lpa(graph, v):
-    def label(graph, x, c):
-        pass
-
-    for node in graph.nodes_iter():
-        count = {}
-        degree = graph.degree(node)
-
+    def normalize(node):
+        sum_val = 0
         for neighbor in graph.neighbors_iter(node):
-            neighbor_label = graph.node[node]['pre_label']
-            neighbor_weight = graph.edge[node][neighbor]['weight']
-
-            count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + 1.0
-
-        print count
-        print degree
-
-def estimate_stop_cond(graph):
-    for node in graph.nodes_iter():
-        count = {}
+            sum_val += graph.node[neighbor]['']
 
         for neighbor in graph.neighbors_iter(node):
             pass
+
+    def calculate_belonging_coefficient(node):
+        degree = float(graph.degree(node))
+        labels = dict()
+
+        for neighbor in graph.neighbors_iter(node):
+            for label in graph.node[neighbor]['prev_label']:
+                labels.setdefault(label, graph.node[neighbor]['prev_label'][label])
+
+        return graph.node[node]['current_label'] = val / degree
+
+    def propagate(node, source, dest):
+        for neighbor in graph.neighbors_iter(node):
+            pass
+
+    for node in graph.nodes_iter():
+        degree = graph.degree(node)
+
+        for neighbor in graph.neighbors_iter(node):
+            neighbor_label = graph.node[node]['prev_label']
+            neighbor_weight = graph.edge[node][neighbor]['weight']
+
+            neighbor_label['current_label'] = ''
+            #count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + 1.0
+
+def estimate_stop_cond(graph):
+    pass
 
 def print_graph_info(graph):
     game_info = read_game_info_from_file('sample/id_name.info')
@@ -72,10 +90,10 @@ def print_graph_info(graph):
 
 if __name__ == '__main__':
     g = read_graph_from_file('sample/t.data')
-    mlpa(g, 0.5)
-    #print_graph_info(g)
+    lpa(g, 0.5)
+    print_graph_info(g)
 
     #node_color = [float(g.node[v]['label']) for v in g]
-    ##labels = dict([(node, node) for node, data in g.nodes_iter(True)])
+    #labels = dict([(node, node) for node, data in g.nodes_iter(True)])
     #nx.draw_networkx(g, node_color = node_color)
     #plt.show()
