@@ -11,8 +11,8 @@ def read_graph_from_file(path):
 
     # initial graph's node's attribute 'label' with its id
     for node, data in graph.nodes_iter(True):
-        data['prev_label'] = {node : 1.0}
-        data['current_label'] = dict()
+        data['prev_label'] = dict()
+        data['current_label'] = {node : 1.0}
 
     return graph
 
@@ -27,7 +27,7 @@ def read_game_info_from_file(path):
 
     return game
 
-# COPRA - muti-label-propagation algorithm
+# COPRA - label-propagation algorithm
 # (can find overlapping communities)
 #
 # note:
@@ -37,68 +37,96 @@ def read_game_info_from_file(path):
 #     v : number of labels of a vertex can contain
 def lpa(graph, v):
     def propagate(node):
-	# calculate belonging coefficient
-	labels = dict() # store vertex -> belonging coefficient
+        'calculate belonging coefficient'
+        labels = dict() # store vertex -> belonging coefficient
 
+        degree = float(graph.degree(node))
         for neighbor in graph.neighbors_iter(node):
-	    for label in graph.node[neighbor]:
-	        labels[label] = labels.get(label, 0.0)\
-			+ graph.node[neighbor]['prev_label'][label]
-	
-	degree = graph.degree(node)
-	for label in labels:
-	    labels[label] /= degree
+            prev_label = graph.node[neighbor]['prev_label']
+
+            for label in prev_label:
+                labels[label] = labels.get(label, 0.0)\
+                    + prev_label[label] / degree
 	
         # delete pair that is less then threshold
-	threshold = 1.0 / v
-	for label in labels:
-	    if labels[label] < threshold:
-		del labels[label]
+        threshold = 1.0 / v
+        current_label = graph.node[node]['current_label']
+        for label, coefficient in labels.items():
+            if coefficient >= threshold:
+                current_label[label] = coefficient
+
+        if len(current_label) == 0:
+            label_items = labels.items()
+            label_items.sort(key = lambda x: x[1], reverse = True)
+            maximum_coefficient_labels = [l for l, c in label_items\
+                    if c == label_items[0][1]]
+
+            label = random.sample(maximum_coefficient_labels, 1)[0]
+            current_label[label] = labels[label]
+
+        normalize(node)
+
+        print node, current_label
 
     def normalize(node):
-        sum_val = 0
-        for neighbor in graph.neighbors_iter(node):
-            sum_val += graph.node[neighbor]['']
+        'normalize coefficients so that they can sums to 1'
+        current_label = graph.node[node]['current_label']
+        sum_val = sum(current_label.values())
 
-        for neighbor in graph.neighbors_iter(node):
-            pass
+        if sum_val == 1:
+            return
 
-    for node in graph.nodes_iter():
-        degree = graph.degree(node)
+        for l in current_label:
+            current_label[l] = current_label[l] / sum_val
 
-        for neighbor in graph.neighbors_iter(node):
-            neighbor_label = graph.node[node]['prev_label']
-            neighbor_weight = graph.edge[node][neighbor]['weight']
+    def reset_current_label():
+        for node in graph.nodes_iter():
+            graph.node[node]['prev_label'] = graph.node[node]['current_label']
+            graph.node[node]['current_label'] = dict()
 
-            neighbor_label['current_label'] = ''
-            #count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + 1.0
+    loop_count = 0
+
+    while True:
+        loop_count += 1
+        print 'loop', loop_count
+
+        reset_current_label()
+
+        for node in graph.nodes_iter():
+            propagate(node)
+
+        if estimate_stop_cond(graph) is True or loop_count >= 6:
+            return
 
 def estimate_stop_cond(graph):
-    pass
+    return False
 
 def print_graph_info(graph):
     game_info = read_game_info_from_file('sample/id_name.info')
     info = {}
 
-    for node, data in graph.nodes_iter(True):
-        info.setdefault(graph.node[node]['current_label'], []).append(game_info.get(node, node))
+    for node in graph.nodes_iter():
+        current_label = graph.node[node]['current_label']
+
+        for label in current_label:
+            info.setdefault(label, []).append(game_info.get(node, node))
 
     print 'node num:', len(graph.nodes())
     print 'class num:', len(info.keys())
     print 'class:', info.keys()
-    print 'info:\n'
+    print 'info:'
     for clazz in info:
-        print clazz, ':',
+        print '\t', clazz, ':',
         for label in info[clazz]:
             print '\'' + label + '\'',
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/t.data')
-    lpa(g, 0.5)
+    g = read_graph_from_file('sample/k.data')
+    lpa(g, 1)
     print_graph_info(g)
 
-    #node_color = [float(g.node[v]['label']) for v in g]
-    #labels = dict([(node, node) for node, data in g.nodes_iter(True)])
-    #nx.draw_networkx(g, node_color = node_color)
-    #plt.show()
+    node_color = [float(g.node[v]['current_label'].keys()[0]) for v in g]
+    labels = dict([(node, node) for node in g.nodes_iter()])
+    nx.draw_networkx(g, node_color = node_color)
+    plt.show()

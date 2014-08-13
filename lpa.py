@@ -88,15 +88,15 @@ def print_graph_info(graph):
     print 'node num:', len(graph.nodes())
     print 'class num:', len(info.keys())
     print 'class:', info.keys()
-    print 'info:\n'
+    print 'info:'
     for clazz in info:
-        print clazz, ':',
+        print '\t', clazz, ':',
         for label in info[clazz]:
             print '\'' + label + '\'',
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/f.data')
+    g = read_graph_from_file('sample/k.data')
     lpa(g)
     print_graph_info(g)
 
