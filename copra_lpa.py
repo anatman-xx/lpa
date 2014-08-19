@@ -38,51 +38,81 @@ def read_game_info_from_file(path):
 def lpa(graph, v):
     def propagate(node):
         'calculate belonging coefficient'
-        labels = dict() # store vertex -> belonging coefficient
+        # we assume that current label dict is empty
+        # store vertex -> belonging coefficient
+        current_label = graph.node[node]['current_label']
 
         degree = float(graph.degree(node))
         for neighbor in graph.neighbors_iter(node):
             prev_label = graph.node[neighbor]['prev_label']
 
             for label in prev_label:
-                labels[label] = labels.get(label, 0.0)\
+                current_label[label] = current_label.get(label, 0.0)\
                     + prev_label[label] / degree
-	
+
+        normalize(current_label)
+
         # delete pair that is less then threshold
         threshold = 1.0 / v
-        current_label = graph.node[node]['current_label']
-        for label, coefficient in labels.items():
-            if coefficient >= threshold:
-                current_label[label] = coefficient
+        label_max, coefficient_max = '', 0.0
+        for label, coefficient in current_label.items():
+            if coefficient < threshold:
+                del current_label[label]
+                if coefficient > coefficient_max:
+                    label_max, coefficient_max = label, coefficient
 
         if len(current_label) == 0:
-            label_items = labels.items()
-            label_items.sort(key = lambda x: x[1], reverse = True)
-            maximum_coefficient_labels = [l for l, c in label_items\
-                    if c == label_items[0][1]]
+            current_label[label_max] = coefficient_max
+        else:
+            normalize(current_label)
 
-            label = random.sample(maximum_coefficient_labels, 1)[0]
-            current_label[label] = labels[label]
-
-        normalize(node)
-
-        print node, current_label
-
-    def normalize(node):
+    def normalize(labels):
         'normalize coefficients so that they can sums to 1'
-        current_label = graph.node[node]['current_label']
-        sum_val = sum(current_label.values())
+        sum_val = sum(labels.values())
 
         if sum_val == 1:
             return
 
-        for l in current_label:
-            current_label[l] = current_label[l] / sum_val
+        for label in labels:
+            labels[label] = labels[label] / sum_val
 
     def reset_current_label():
         for node in graph.nodes_iter():
             graph.node[node]['prev_label'] = graph.node[node]['current_label']
             graph.node[node]['current_label'] = dict()
+
+    def label_set(label_type):
+        labels = set()
+        for node in graph.nodes_iter():
+            labels.update(graph.node[node][label_type].keys())
+
+        return labels
+
+    def label_count(label_type):
+        labels = dict()
+        for node in graph.nodes_iter():
+            for label in graph.node[node][label_type]:
+                labels[label] = labels.get(label, 0) + 1
+
+        return labels
+
+    def mc(cs1, cs2):
+        cs = dict()
+        for c in cs1:
+            cs[c] = min(cs1[c], cs2[c])
+
+        return cs
+
+    def estimate_stop_cond():
+        #prev_label_set = label_set('prev_label')
+        #current_label_set = label_set('current_label')
+
+        #if len(prev_label_set) == len(current_label_set):
+        #    pass
+        #else:
+        #    min = mc(min)
+
+        return False
 
     loop_count = 0
 
@@ -95,11 +125,8 @@ def lpa(graph, v):
         for node in graph.nodes_iter():
             propagate(node)
 
-        if estimate_stop_cond(graph) is True or loop_count >= 6:
+        if estimate_stop_cond() is True or loop_count >= 4:
             return
-
-def estimate_stop_cond(graph):
-    return False
 
 def print_graph_info(graph):
     game_info = read_game_info_from_file('sample/id_name.info')
@@ -122,11 +149,11 @@ def print_graph_info(graph):
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/k.data')
+    g = read_graph_from_file('sample/f.data')
     lpa(g, 1)
     print_graph_info(g)
 
-    node_color = [float(g.node[v]['current_label'].keys()[0]) for v in g]
-    labels = dict([(node, node) for node in g.nodes_iter()])
-    nx.draw_networkx(g, node_color = node_color)
-    plt.show()
+    #node_color = [float(g.node[v]['current_label'].keys()[0]) for v in g]
+    #labels = dict([(node, node) for node in g.nodes_iter()])
+    #nx.draw_networkx(g, node_color = node_color)
+    #plt.show()

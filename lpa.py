@@ -26,30 +26,30 @@ def read_game_info_from_file(path):
 
     return game
 
-def estimate_stop_cond(graph):
-    for node in graph.nodes_iter():
-        count = {}
-
-        for neighbor in graph.neighbors_iter(node):
-            neighbor_label = graph.node[neighbor]['label']
-            neighbor_weight = graph.edge[node][neighbor]['weight']
-            count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + neighbor_weight
-
-        # find out labels with maximum count
-        count_items = count.items()
-        count_items.sort(key = lambda x: x[1], reverse = True)
-
-        # if there is not only one label with maximum count then choose one randomly
-        labels = [k for k,v in count_items if v == count_items[0][1]]
-
-        if graph.node[node]['label'] not in labels:
-            return False
-
-    return True
-
 # label-propagation algorithm
 # use asynchronous updating for better results
 def lpa(graph):
+    def estimate_stop_cond():
+        for node in graph.nodes_iter():
+            count = {}
+
+            for neighbor in graph.neighbors_iter(node):
+                neighbor_label = graph.node[neighbor]['label']
+                neighbor_weight = graph.edge[node][neighbor]['weight']
+                count[neighbor_label] = count.setdefault(neighbor_label, 0.0) + neighbor_weight
+
+            # find out labels with maximum count
+            count_items = count.items()
+            count_items.sort(key = lambda x: x[1], reverse = True)
+
+            # if there is not only one label with maximum count then choose one randomly
+            labels = [k for k,v in count_items if v == count_items[0][1]]
+
+            if graph.node[node]['label'] not in labels:
+                return False
+
+        return True
+
     loop_count = 0
 
     while True:
@@ -96,11 +96,11 @@ def print_graph_info(graph):
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/k.data')
+    g = read_graph_from_file('sample/f.data')
     lpa(g)
     print_graph_info(g)
 
-    node_color = [float(g.node[v]['label']) for v in g]
-    labels = dict([(node, node) for node, data in g.nodes_iter(True)])
-    nx.draw_networkx(g, node_color = node_color)
-    plt.show()
+    #node_color = [float(g.node[v]['label']) for v in g]
+    #labels = dict([(node, node) for node, data in g.nodes_iter(True)])
+    #nx.draw_networkx(g, node_color = node_color)
+    #plt.show()
