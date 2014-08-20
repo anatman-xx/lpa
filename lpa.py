@@ -74,7 +74,7 @@ def lpa(graph):
 
             graph.node[node]['label'] = label
 
-        if estimate_stop_cond(graph) is True or loop_count >= 10:
+        if estimate_stop_cond() is True or loop_count >= 10:
             print 'complete'
             return
 
@@ -96,7 +96,7 @@ def print_graph_info(graph):
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/f.data')
+    g = read_graph_from_file('sample/t.data')
     lpa(g)
     print_graph_info(g)
 

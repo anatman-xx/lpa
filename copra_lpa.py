@@ -11,8 +11,8 @@ def read_graph_from_file(path):
 
     # initial graph's node's attribute 'label' with its id
     for node, data in graph.nodes_iter(True):
-        data['prev_label'] = dict()
-        data['current_label'] = {node : 1.0}
+        data['prev_label'] = {node : 1.0}
+        data['current_label'] = dict()
 
     return graph
 
@@ -42,7 +42,7 @@ def lpa(graph, v):
         # store vertex -> belonging coefficient
         current_label = graph.node[node]['current_label']
 
-        degree = float(graph.degree(node))
+        degree = graph.degree(node)
         for neighbor in graph.neighbors_iter(node):
             prev_label = graph.node[neighbor]['prev_label']
 
@@ -62,7 +62,7 @@ def lpa(graph, v):
                     label_max, coefficient_max = label, coefficient
 
         if len(current_label) == 0:
-            current_label[label_max] = coefficient_max
+            current_label[label_max] = 1.0
         else:
             normalize(current_label)
 
@@ -96,37 +96,38 @@ def lpa(graph, v):
 
         return labels
 
-    def mc(cs1, cs2):
-        cs = dict()
-        for c in cs1:
-            cs[c] = min(cs1[c], cs2[c])
+    def mc(label_dict_1, label_dict_2):
+        label_dict = dict()
+        for label in label_dict_1:
+            label_dict[label] = min(label_dict_1[label], label_dict_2[label])
 
-        return cs
+        return label_dict
 
-    def estimate_stop_cond():
-        #prev_label_set = label_set('prev_label')
-        #current_label_set = label_set('current_label')
-
-        #if len(prev_label_set) == len(current_label_set):
-        #    pass
-        #else:
-        #    min = mc(min)
-
-        return False
-
+    min_labels = dict()
+    old_min_labels = dict()
     loop_count = 0
 
     while True:
         loop_count += 1
         print 'loop', loop_count
 
-        reset_current_label()
-
         for node in graph.nodes_iter():
             propagate(node)
 
-        if estimate_stop_cond() is True or loop_count >= 4:
-            return
+        prev_label_set = label_set('prev_label')
+        current_label_set = label_set('current_label')
+
+        if prev_label_set == current_label_set:
+            min_labels = mc(min_labels, label_count('current_label'))
+        else:
+            min_labels = label_count('current_label')
+
+        if min_labels != old_min_labels:
+            old_min_labels = min_labels
+            reset_current_label()
+            continue
+
+        return
 
 def print_graph_info(graph):
     game_info = read_game_info_from_file('sample/id_name.info')
