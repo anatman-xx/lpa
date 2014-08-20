@@ -90,17 +90,17 @@ def print_graph_info(graph):
     print 'class:', info.keys()
     print 'info:'
     for clazz in info:
-        print '\t', clazz, ':',
+        print '\t%s(%d):' % (clazz, len(info[clazz])),
         for label in info[clazz]:
-            print '\'' + label + '\'',
+            print '\'%s\'' % label,
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/t.data')
+    g = read_graph_from_file('sample/d.data')
     lpa(g)
     print_graph_info(g)
 
-    #node_color = [float(g.node[v]['label']) for v in g]
-    #labels = dict([(node, node) for node, data in g.nodes_iter(True)])
-    #nx.draw_networkx(g, node_color = node_color)
-    #plt.show()
+    node_color = [float(g.node[v]['label']) for v in g]
+    labels = dict([(node, node) for node, data in g.nodes_iter(True)])
+    nx.draw_networkx(g, node_color = node_color)
+    plt.show()

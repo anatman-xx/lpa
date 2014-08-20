@@ -144,13 +144,13 @@ def print_graph_info(graph):
     print 'class:', info.keys()
     print 'info:'
     for clazz in info:
-        print '\t', clazz, ':',
+        print '\t%s(%d):' % (clazz, len(info[clazz])),
         for label in info[clazz]:
             print '\'' + label + '\'',
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/f.data')
+    g = read_graph_from_file('sample/d.data')
     lpa(g, 1)
     print_graph_info(g)
 
