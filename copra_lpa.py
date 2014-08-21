@@ -54,15 +54,19 @@ def lpa(graph, v):
 
         # delete pair that is less then threshold
         threshold = 1.0 / v
-        label_max, coefficient_max = '', 0.0
+        deleted_labels, coefficient_max = set(), 0.0
         for label, coefficient in current_label.items():
             if coefficient < threshold:
                 del current_label[label]
                 if coefficient > coefficient_max:
-                    label_max, coefficient_max = label, coefficient
+                    deleted_labels.clear()
+                    deleted_labels.add(label)
+                    coefficient_max = coefficient
+                elif coefficient == coefficient_max:
+                    deleted_labels.add(label)
 
         if len(current_label) == 0:
-            current_label[label_max] = 1.0
+            current_label[random.sample(deleted_labels, 1)[0]] = 1.0
         else:
             normalize(current_label)
 
@@ -150,8 +154,8 @@ def print_graph_info(graph):
         print '\n',
 
 if __name__ == '__main__':
-    g = read_graph_from_file('sample/d.data')
-    lpa(g, 1)
+    g = read_graph_from_file('sample/r.data')
+    lpa(g, 2)
     print_graph_info(g)
 
     #node_color = [float(g.node[v]['current_label'].keys()[0]) for v in g]
